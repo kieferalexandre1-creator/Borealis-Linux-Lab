@@ -131,7 +131,55 @@ Les différentes machines seront connectées à un réseau virtuel dédié au la
 
 <img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/6e91e552-ddd4-44a0-8e07-b15eaa77f5e7" />
 
+## 📋 03 — Planification du projet
 
+Avant le déploiement des machines virtuelles, le laboratoire Borealis est organisé
+en plusieurs phases afin de construire progressivement l'environnement et de
+documenter chaque étape.
+
+### 🗺️ Feuille de route
+
+| Phase | Objectif | État |
+|---|---|---|
+| **01 — Conception** | Définition des objectifs et de l'architecture | ✅ Terminé |
+| **02 — Déploiement** | Création et configuration initiale des VM Debian | ⏳ À venir |
+| **03 — Administration** | Utilisateurs, permissions, services, stockage et réseau | ⏳ À venir |
+| **04 — Accès distant** | Configuration et sécurisation de SSH | ⏳ À venir |
+| **05 — Hardening** | Durcissement et réduction de la surface d'attaque | ⏳ À venir |
+| **06 — Scripting** | Automatisation de tâches avec Bash | ⏳ À venir |
+| **07 — Ansible** | Administration et configuration automatisées | ⏳ À venir |
+| **08 — Docker** | Déploiement et sécurisation de services conteneurisés | ⏳ À venir |
+| **09 — Validation** | Tests fonctionnels et contrôles de sécurité | ⏳ À venir |
+| **10 — Documentation** | Finalisation des procédures et bilan du laboratoire | ⏳ À venir |
+
+---
+
+### 🖥️ Machines prévues
+
+| Hôte | Fonction | Système |
+|---|---|---|
+| `SRV-BOREALIS-CTL` | Administration & automatisation | Debian 12 |
+| `SRV-BOREALIS-01` | Administration & hardening | Debian 12 |
+| `SRV-BOREALIS-02` | Services & conteneurisation | Debian 12 |
+
+Les ressources matérielles et l'adressage IP seront définis lors du déploiement
+des machines virtuelles.
+
+---
+
+### 🧰 Technologies envisagées
+
+![Debian](https://img.shields.io/badge/Debian%2012-A81D33?logo=debian&logoColor=white)
+![Bash](https://img.shields.io/badge/Bash-121011?logo=gnubash&logoColor=white)
+![SSH](https://img.shields.io/badge/SSH-Administration%20distante-2496ED)
+![Ansible](https://img.shields.io/badge/Ansible-EE0000?logo=ansible&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+![VirtualBox](https://img.shields.io/badge/VirtualBox-183A61?logo=virtualbox&logoColor=white)
+
+> [!IMPORTANT]
+> Les technologies présentées dans cette section correspondent aux outils
+> envisagés pour le laboratoire. Le README sera mis à jour progressivement
+> afin de refléter uniquement les éléments réellement déployés et testés.
 
 
 
