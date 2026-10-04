@@ -129,28 +129,8 @@ Objectifs prévus :
 
 Les différentes machines seront connectées à un réseau virtuel dédié au laboratoire.
 
-```text
-                         BOREALIS LINUX LAB
+<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/6e91e552-ddd4-44a0-8e07-b15eaa77f5e7" />
 
-                    ┌───────────────────────┐
-                    │   SRV-BOREALIS-CTL    │
-                    │                       │
-                    │  Admin / Ansible      │
-                    │  Bash / SSH           │
-                    └───────────┬───────────┘
-                                │
-                               SSH
-                                │
-                 ┌──────────────┴──────────────┐
-                 │                             │
-                 ▼                             ▼
-       ┌───────────────────┐         ┌───────────────────┐
-       │ SRV-BOREALIS-01   │         │ SRV-BOREALIS-02   │
-       │                   │         │                   │
-       │ Administration    │◄───────►│ Services          │
-       │ Hardening         │ Réseau  │ Docker            │
-       │ Debian 12         │         │ Debian 12         │
-       └───────────────────┘         └───────────────────┘
 
 
 
