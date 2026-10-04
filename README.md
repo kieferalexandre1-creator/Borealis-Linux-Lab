@@ -50,7 +50,7 @@ L'objectif de ce laboratoire est de construire progressivement un environnement 
 Borealis est construit comme un laboratoire d'apprentissage pratique : chaque étape sera documentée avec les configurations réalisées, les commandes utilisées, les problèmes rencontrés et les solutions mises en œuvre.
 
 
-## 🏗️ 02 — Architecture du laboratoire
+## Architecture du laboratoire
 
 Borealis est conçu comme un laboratoire Linux composé de plusieurs machines Debian ayant chacune un rôle précis.
 
