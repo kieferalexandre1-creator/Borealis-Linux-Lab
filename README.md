@@ -205,25 +205,24 @@ Configuration de la VM
 La machine existait déjà dans l'environnement de virtualisation, mais elle ne contenait que la configuration de base de Debian. Elle a donc été réutilisée et reconfigurée pour le projet Borealis, plutôt que de procéder à une nouvelle installation complète.
 
 ## 1.2 Configuration du nom du serveur
-
-borealis-srv01
+*borealis-srv01*
 
 Le hostname est configuré avec :
-hostnamectl set-hostname borealis-srv01
+*hostnamectl set-hostname borealis-srv01*
 
 La modification est ensuite vérifiée :
-hostnamectl
+*hostnamectl*
 
 L'utilisation de la convention borealis-srvXX permet de conserver une organisation cohérente lorsque plusieurs serveurs seront intégrés à l'infrastructure.
 Le second serveur pourra ainsi être identifié comme :
-borealis-srv02
+*borealis-srv02*
 
 ## 1.3 Configuration de l'adressage réseau
 Le laboratoire Borealis utilise le réseau privé :
-192.168.56.0/24
+*192.168.56.0/24*
 
 Une adresse IP dédiée est attribuée au premier serveur :
-192.168.56.30
+*192.168.56.30*
 
 Cette adresse permet d'identifier de manière stable BOREALIS-SRV01 sur le réseau du laboratoire.
 L'adressage du projet est organisé de manière à pouvoir intégrer progressivement d'autres machines :
@@ -234,23 +233,23 @@ L'adressage du projet est organisé de manière à pouvoir intégrer progressive
 | `BOREALIS-SRV02` | `192.168.56.31` |
 
 La configuration peut être contrôlée avec :
-ip addr
+*ip addr*
 
 ou :
-hostname -I
+*hostname -I*
 
 ## 1.4 Mise à jour du système
 
 Avant le déploiement des différents services, les dépôts et les paquets du serveur sont mis à jour :
-apt update
-apt upgrade -y
+*apt update*
+*apt upgrade -y*
 
 Cette étape permet de partir sur un système à jour avant de commencer les opérations d'administration et de sécurisation.
 
 ## 1.5 Vérification de l'environnement
 
 La version du système peut être contrôlée avec :
-cat /etc/os-release
+*cat /etc/os-release*
 
 Le serveur utilisé pour le projet fonctionne sous :
 Debian GNU/Linux 13 (Trixie)
@@ -259,11 +258,9 @@ Le nom de la machine est vérifié avec :
 *hostname*
 
 Résultat attendu :
-
 *borealis-srv01*
 
 La configuration réseau est ensuite vérifiée :
-
 *hostname -I*
 
 Résultat attendu :
@@ -285,12 +282,14 @@ Trois groupes sont mis en place :
 | `borealis-web` | Ressources Web |
 
 Ils sont créés avec :
-groupadd borealis-admin
-groupadd borealis-dev
-groupadd borealis-web
+
+*groupadd borealis-admin*
+*groupadd borealis-dev*
+*groupadd borealis-web*
 
 Leur présence est vérifiée avec :
-getent group borealis-admin borealis-dev borealis-web
+
+*getent group borealis-admin borealis-dev borealis-web*
 
 ## 2.2 Création des utilisateurs
 
