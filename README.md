@@ -184,7 +184,7 @@ des machines virtuelles.
 
 ## Chapitre 1 — Déploiement de BOREALIS-SRV01
 
-1.1 Mise en place de la machine virtuelle
+## 1.1 Mise en place de la machine virtuelle
 
 La première étape du projet Borealis Linux Lab consiste à mettre en place le serveur Linux principal de l'infrastructure.
 
@@ -204,7 +204,7 @@ Configuration de la VM
 
 La machine existait déjà dans l'environnement de virtualisation, mais elle ne contenait que la configuration de base de Debian. Elle a donc été réutilisée et reconfigurée pour le projet Borealis, plutôt que de procéder à une nouvelle installation complète.
 
-1.2 Configuration du nom du serveur
+## 1.2 Configuration du nom du serveur
 
 borealis-srv01
 
@@ -218,7 +218,7 @@ L'utilisation de la convention borealis-srvXX permet de conserver une organisati
 Le second serveur pourra ainsi être identifié comme :
 borealis-srv02
 
-1.3 Configuration de l'adressage réseau
+## 1.3 Configuration de l'adressage réseau
 Le laboratoire Borealis utilise le réseau privé :
 192.168.56.0/24
 
@@ -239,13 +239,16 @@ ip addr
 ou :
 hostname -I
 
-1.4 Mise à jour du système
+## 1.4 Mise à jour du système
+
 Avant le déploiement des différents services, les dépôts et les paquets du serveur sont mis à jour :
 apt update
 apt upgrade -y
 
 Cette étape permet de partir sur un système à jour avant de commencer les opérations d'administration et de sécurisation.
-1.5 Vérification de l'environnement
+
+## 1.5 Vérification de l'environnement
+
 La version du système peut être contrôlée avec :
 cat /etc/os-release
 
@@ -253,22 +256,24 @@ Le serveur utilisé pour le projet fonctionne sous :
 Debian GNU/Linux 13 (Trixie)
 
 Le nom de la machine est vérifié avec :
-hostname
+*hostname*
 
 Résultat attendu :
-borealis-srv01 
+
+*borealis-srv01*
 
 La configuration réseau est ensuite vérifiée :
-hostname -I
+
+*hostname -I*
 
 Résultat attendu :
-192.168.56.30
+*192.168.56.30*
 
 À l'issue de cette première étape, BOREALIS-SRV01 est opérationnel et intégré au réseau du laboratoire. Il constitue désormais le serveur Linux principal sur lequel seront progressivement déployées les différentes fonctions d'administration et de sécurisation.
 
 ## Chapitre 2 — Gestion des utilisateurs, groupes et permissions
 
-2.1 Objectif
+## 2.1 Objectif
 
 Afin de reproduire le fonctionnement d'une infrastructure professionnelle, les accès aux ressources du serveur sont séparés selon les rôles des utilisateurs.
 Trois groupes sont mis en place :
@@ -287,20 +292,26 @@ groupadd borealis-web
 Leur présence est vérifiée avec :
 getent group borealis-admin borealis-dev borealis-web
 
-2.2 Création des utilisateurs
+## 2.2 Création des utilisateurs
+
 Le compte alex est utilisé comme compte d'administration et rejoint le groupe :
-usermod -aG borealis-admin alex
+
+*usermod -aG borealis-admin alex*
 
 Deux utilisateurs sont également créés afin de représenter différents profils au sein de l'entreprise :
-useradd -m -s /bin/bash dev01
-useradd -m -s /bin/bash web01
+
+*useradd -m -s /bin/bash dev01*
+*useradd -m -s /bin/bash web01*
 
 Ils sont ensuite associés à leurs groupes respectifs :
-usermod -aG borealis-dev dev01
-usermod -aG borealis-web web01
+
+*usermod -aG borealis-dev dev01*
+*usermod -aG borealis-web web01*
 
 Cette séparation permettra de tester par la suite que chaque utilisateur dispose uniquement des ressources nécessaires à son rôle.
-2.3 Organisation des données
+
+## 2.3 Organisation des données
+
 Une arborescence dédiée est créée dans /srv :
 
 /srv/borealis/
@@ -310,7 +321,7 @@ Une arborescence dédiée est créée dans /srv :
 └── web/
 
 Les répertoires sont créés avec :
-mkdir -p /srv/borealis/{shared,dev,web,backup}
+*mkdir -p /srv/borealis/{shared,dev,web,backup}*
 
 Chaque espace possède une fonction distincte :
 
@@ -321,17 +332,19 @@ Chaque espace possède une fonction distincte :
 | `backup/` | Sauvegardes réservées à l'administration |
 | `shared/` | Espace destiné aux ressources communes |
 
-2.4 Attribution des droits
+## 2.4 Attribution des droits
+
 Les différents répertoires sont associés aux groupes appropriés :
-chown root:borealis-dev /srv/borealis/dev
+
+**chown root:borealis-dev /srv/borealis/dev
 chown root:borealis-web /srv/borealis/web
-chown root:borealis-admin /srv/borealis/backup
+chown root:borealis-admin /srv/borealis/backup**
 
 Les permissions sont ensuite appliquées :
-chmod 2770 /srv/borealis/dev
+**chmod 2770 /srv/borealis/dev
 chmod 2770 /srv/borealis/web
 chmod 2770 /srv/borealis/backup
-chmod 2775 /srv/borealis/shared
+chmod 2775 /srv/borealis/shared**
 
 Le bit SetGID est utilisé sur ces répertoires. Il permet aux nouveaux fichiers et sous-répertoires de conserver automatiquement le groupe associé au répertoire parent.
 La configuration est contrôlée avec :
