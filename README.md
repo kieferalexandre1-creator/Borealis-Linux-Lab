@@ -606,20 +606,217 @@ Deux fichiers sont générés :
 La clé privée n'a pas vocation à être copiée sur BOREALIS-SRV01 ou publiée dans le dépôt GitHub.
 Preuve de génération : 
 
-## 4.7 Autorisation de la clé sur le serveur
-La clé publique du poste administrateur est ajoutée au fichier :
-/home/alex/.ssh/authorized_keys
+Voici la suite de ton README GitHub pour Borealis Linux Lab, en reprenant à partir de la section 4.7.
 
-OpenSSH impose des permissions suffisamment restrictives sur ces éléments.
-Le répertoire .ssh est configuré en :
-chmod 700 /home/alex/.ssh
+Je garde un style naturel, à la première personne, comme si tu expliquais toi-même les manipulations réalisées et leur intérêt. Les commandes sont accompagnées d'explications courtes, sans captures d'écran obligatoires.
 
-et le fichier contenant les clés autorisées en :
-chmod 600 /home/alex/.ssh/authorized_keys
+Les étapes 4.7 et 4.8 correspondent aux tests que tu m'as confirmés. Pour les étapes suivantes, conserve uniquement les résultats que tu as réellement vérifiés.
 
-La configuration est contrôlée avec :
-ls -la /home/alex/.ssh
+## 4.7 — Autorisation de la clé SSH sur le serveur
 
-Le fichier authorized_keys appartient au compte alex et n'est modifiable que par son propriétaire.
-Preuve de configuration 
+Après avoir généré ma paire de clés SSH, j'ai configuré mon serveur Debian pour qu'il accepte ma clé publique.
 
+L'objectif est de pouvoir me connecter à distance de manière plus sécurisée, sans utiliser systématiquement le mot de passe de mon compte Linux.
+
+J'ai commencé par créer le répertoire `.ssh` dans le dossier personnel de mon utilisateur :
+
+```
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+```
+
+J'ai ensuite ouvert le fichier `authorized_keys` pour y ajouter ma clé publique :
+
+```
+nano ~/.ssh/authorized_keys
+```
+
+Ce fichier permet au serveur de connaître les clés publiques autorisées à se connecter au compte.
+
+Une fois ma clé ajoutée, j'ai appliqué les permissions nécessaires :
+
+```
+chmod 600 ~/.ssh/authorized_keys
+```
+
+Ces permissions sont importantes : elles empêchent les autres utilisateurs du système de modifier les clés autorisées.
+
+## 4.8 — Test de connexion SSH par clé
+
+Une fois la clé publique enregistrée sur le serveur, j'ai effectué un test depuis mon poste client.
+
+```
+ssh -i ~/.ssh/id_ed25519 utilisateur@IP_DU_SERVEUR
+```
+
+J'ai réussi à établir une connexion SSH en utilisant ma clé privée, sans saisir le mot de passe de mon compte Debian.
+
+Ce test m'a permis de confirmer que l'authentification par clé fonctionnait correctement.
+
+## 4.9 — Renforcement de la configuration SSH
+
+Après avoir validé l'authentification par clé, l'étape suivante consiste à désactiver les connexions SSH par mot de passe.
+
+J'ai choisi cette approche pour réduire les risques liés aux tentatives de connexion par force brute et empêcher les connexions SSH directes au compte root.
+
+J'ai ouvert le fichier de configuration :
+
+```
+sudo nano /etc/ssh/sshd_config
+```
+
+Les paramètres à appliquer sont les suivants :
+
+```
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin no
+```
+
+J'ai également prévu de vérifier les éventuels fichiers de configuration supplémentaires :
+
+```
+sudo grep -RniE 'PasswordAuthentication|KbdInteractiveAuthentication|PermitRootLogin|PubkeyAuthentication' /etc/ssh/sshd_config.d/
+```
+
+Avant de recharger le service, je vérifie la syntaxe et les paramètres réellement appliqués :
+
+```
+sudo sshd -t
+sudo sshd -T | grep -E 'pubkeyauthentication|passwordauthentication|kbdinteractiveauthentication|permitrootlogin'
+```
+
+Si la configuration est correcte, je peux recharger SSH :
+
+```
+sudo systemctl reload ssh
+```
+
+Je conserve ma session actuelle ouverte pendant les tests, afin de ne pas perdre l'accès au serveur en cas d'erreur.
+
+## 4.10 — Installation et configuration du pare-feu UFW
+
+Pour compléter la sécurisation de mon serveur, j'ai choisi d'utiliser UFW, un outil qui simplifie la gestion des règles de pare-feu sous Linux.
+
+Mon objectif est de bloquer les connexions entrantes qui ne sont pas nécessaires, tout en conservant l'accès SSH depuis mon poste d'administration.
+
+J'ai commencé par installer UFW :
+
+```
+sudo apt update
+sudo apt install ufw -y
+```
+
+Avant d'activer le pare-feu, je vérifie le port utilisé par SSH :
+
+```
+sudo sshd -T | grep '^port '
+```
+
+Si SSH utilise le port 22, je l'autorise avec la commande suivante :
+
+```
+sudo ufw allow 22/tcp
+```
+
+J'applique ensuite les règles par défaut :
+
+```
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+```
+
+Cela signifie que les nouvelles connexions entrantes sont refusées par défaut, sauf lorsqu'une règle les autorise explicitement.
+
+Après avoir vérifié la présence de ma règle SSH :
+
+```
+sudo ufw show added
+```
+
+Je peux activer le pare-feu :
+
+```
+sudo ufw enable
+```
+
+Enfin, je contrôle son état :
+
+```
+sudo ufw status verbose
+```
+
+Cette configuration permet de limiter l'exposition réseau du serveur et de mieux maîtriser les services accessibles.
+
+## 4.11 — Restriction de l'accès SSH au réseau d'administration
+
+Après avoir mis en place UFW, je souhaite limiter l'accès SSH aux machines de mon réseau d'administration.
+
+Même avec une authentification par clé, il est préférable de ne pas exposer inutilement le service SSH à toutes les machines du réseau.
+
+Pour commencer, j'identifie les interfaces et les adresses IPv4 de mon serveur :
+
+```
+ip -4 addr
+```
+
+Je dois ensuite identifier le sous-réseau depuis lequel mon poste client se connecte.
+
+Par exemple, si mon réseau d'administration est `192.168.1.0/24`, je peux ajouter la règle suivante :
+
+```
+sudo ufw allow from 192.168.1.0/24 to any port 22 proto tcp
+```
+
+Cette adresse est uniquement un exemple : je dois utiliser le véritable sous-réseau de mon laboratoire.
+
+Avant de supprimer la règle SSH qui autorise toutes les adresses, je teste une nouvelle connexion depuis mon poste client.
+
+Je peux ensuite afficher les règles existantes :
+
+```
+sudo ufw status numbered
+```
+
+Puis supprimer la règle générale devenue inutile, en utilisant son numéro réel :
+
+```
+sudo ufw delete NUMERO_DE_LA_REGLE
+```
+
+L'intérêt de cette configuration est d'appliquer le principe du moindre privilège au niveau réseau : seules les machines ayant réellement besoin d'administrer le serveur doivent pouvoir accéder au service SSH.
+
+## 4.12 — Vérification des ports et services actifs
+
+Pour terminer cette partie consacrée à la sécurisation du serveur, je vérifie les services réseau qui sont actuellement à l'écoute.
+
+J'utilise la commande :
+
+```
+sudo ss -tulpen
+```
+
+Elle me permet d'identifier les ports TCP et UDP ouverts en écoute ainsi que les processus associés.
+
+Je compare ensuite ces informations aux règles configurées dans UFW :
+
+```
+sudo ufw status numbered
+```
+
+Cette vérification est utile pour repérer les services qui ne devraient pas être exposés sur le réseau.
+
+Un port en écoute n'est pas forcément accessible depuis l'extérieur : cela dépend notamment de l'interface sur laquelle le service écoute et des règles du pare-feu.
+
+L'objectif est donc de conserver uniquement les services nécessaires au fonctionnement du laboratoire et de limiter autant que possible la surface d'attaque du serveur.
+
+### Bilan de cette partie
+
+Cette phase de Borealis Linux Lab est consacrée à la sécurisation des accès à mon serveur Debian.
+
+Elle m'a permis de travailler sur plusieurs notions importantes en administration Linux : l'authentification SSH par clé, la gestion des permissions, le durcissement du service SSH et le filtrage des connexions réseau.
+
+Au-delà de l'exécution des commandes, l'objectif est de comprendre pourquoi chaque configuration est nécessaire et comment vérifier qu'elle fonctionne correctement.
+
+Pour la suite du projet, je te propose de passer à la section 5 — Supervision et surveillance du serveur Linux, avec notamment l'analyse des journaux système, le suivi des connexions SSH et la mise en place d'outils de surveillance. Cela permettra de compléter la partie sécurisation par une approche de détection et de diagnostic.
