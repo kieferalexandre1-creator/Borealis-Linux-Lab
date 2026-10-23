@@ -820,3 +820,335 @@ Elle m'a permis de travailler sur plusieurs notions importantes en administratio
 Au-delà de l'exécution des commandes, l'objectif est de comprendre pourquoi chaque configuration est nécessaire et comment vérifier qu'elle fonctionne correctement.
 
 Pour la suite du projet, je te propose de passer à la section 5 — Supervision et surveillance du serveur Linux, avec notamment l'analyse des journaux système, le suivi des connexions SSH et la mise en place d'outils de surveillance. Cela permettra de compléter la partie sécurisation par une approche de détection et de diagnostic.
+Parfait ! On reprend Borealis Linux Lab à l'étape 5, puisque tu as terminé toute la partie 4 consacrée à la sécurisation SSH et au pare-feu UFW.
+
+On va maintenant travailler sur la surveillance et l'analyse des journaux Linux. C'est une bonne suite pour ton portfolio, car elle montre que tu ne te limites pas à installer et sécuriser un serveur : tu sais aussi surveiller son fonctionnement et rechercher des incidents.
+
+Je conserve ton format : des commandes Debian à exécuter, puis des explications naturelles à la première personne, directement utilisables dans ton README GitHub.
+
+# 5. Supervision et analyse des journaux système
+
+## 5.1 — Vérification du service de journalisation
+
+Avant de commencer l'analyse des événements, j'ai voulu comprendre comment Debian enregistre les activités du système.
+
+Linux utilise notamment `systemd-journald`, un service qui centralise les journaux des services et du système. Ces informations sont utiles pour diagnostiquer des erreurs, surveiller les connexions et comprendre ce qui se passe sur le serveur.
+
+J'ai commencé par vérifier l'état du service :
+
+```
+sudo systemctl status systemd-journald
+```
+
+Le service doit être actif, avec un état similaire à :
+
+```
+Active: active (running)
+```
+
+J'ai ensuite utilisé `journalctl` pour consulter les événements enregistrés :
+
+```
+sudo journalctl -n 30 --no-pager
+```
+
+Cette commande affiche les 30 dernières entrées du journal système, sans ouvrir d'interface de pagination.
+
+## 5.2 — Consultation des journaux SSH
+
+Après avoir vérifié la journalisation, je me suis intéressé aux événements liés à SSH.
+
+Comme j'ai précédemment configuré l'authentification par clé et désactivé les connexions par mot de passe, je souhaite maintenant pouvoir identifier les connexions réussies et les éventuelles tentatives refusées.
+
+Pour consulter les événements du service SSH :
+
+```
+sudo journalctl -u ssh --since "today" --no-pager
+```
+
+Pour rechercher les authentifications réussies :
+
+```
+sudo journalctl -u ssh --no-pager | grep "Accepted"
+```
+
+Une connexion réussie par clé peut apparaître sous cette forme :
+
+```
+Accepted publickey for utilisateur from 192.168.1.10 port 54321 ssh2
+```
+
+Ce message permet notamment d'identifier l'utilisateur concerné, l'adresse IP du client et la méthode d'authentification utilisée.
+
+J'ai également prévu de rechercher les événements de refus :
+
+```
+sudo journalctl -u ssh --no-pager | grep -Ei "Failed|Invalid|refused|Disconnected"
+```
+
+L'absence de résultat ne signifie pas forcément qu'aucune tentative n'a eu lieu : les messages disponibles dépendent de la configuration et de la période de conservation des journaux.
+
+## 5.3 — Surveillance des événements en temps réel
+
+Après avoir consulté les journaux existants, j'ai voulu pouvoir observer les nouveaux événements au moment où ils apparaissent.
+
+Pour cela, j'utilise :
+
+```
+sudo journalctl -u ssh -f
+```
+
+L'option `-f` permet de suivre les nouveaux événements en temps réel.
+
+Depuis mon poste client, je peux ouvrir une seconde connexion SSH afin d'observer les événements correspondants dans le terminal du serveur.
+
+Cette méthode est particulièrement utile pour vérifier le fonctionnement de l'authentification et faciliter le diagnostic d'un problème de connexion.
+
+Pour arrêter le suivi des journaux, il suffit d'utiliser `Ctrl + C`.
+
+## 5.4 — Vérification de la conservation des journaux
+
+Pour aller un peu plus loin, j'ai souhaité vérifier comment les journaux étaient conservés sur mon serveur Debian.
+
+La conservation des événements est importante : si les journaux disparaissent après un redémarrage, il devient plus difficile d'analyser un incident survenu précédemment.
+
+J'ai commencé par vérifier l'espace utilisé :
+
+```
+sudo journalctl --disk-usage
+```
+
+Puis j'ai consulté le paramètre de stockage effectif :
+
+```
+systemd-analyze cat-config systemd/journald.conf
+```
+
+Sur Debian, `journald` peut utiliser un stockage persistant ou volatile selon sa configuration.
+
+Si le stockage persistant n'est pas déjà activé, je peux créer une configuration dédiée :
+
+```
+sudo mkdir -p /etc/systemd/journald.conf.d
+sudo nano /etc/systemd/journald.conf.d/10-persistent.conf
+```
+
+Et y ajouter :
+
+```
+[Journal]
+Storage=persistent
+SystemMaxUse=200M
+```
+
+Cette configuration demande à `journald` de conserver les journaux sur disque, avec une limite d'utilisation de 200 Mo pour les journaux persistants.
+
+Pour appliquer la modification :
+
+```
+sudo systemctl restart systemd-journald
+sudo journalctl --flush
+```
+
+Je peux ensuite vérifier la présence du répertoire de stockage :
+
+```
+sudo ls -ld /var/log/journal
+```
+
+Cette étape permet de conserver un historique des événements, ce qui facilite les recherches en cas d'incident ou de dysfonctionnement.
+
+## 5.5 — Contrôle de l'état du serveur
+
+En complément des journaux, je souhaite disposer de quelques commandes simples pour surveiller l'état général de Debian.
+
+Pour vérifier la durée de fonctionnement et la charge du serveur :
+
+```
+uptime
+```
+
+Pour consulter l'utilisation de la mémoire :
+
+```
+free -h
+```
+
+Pour vérifier l'espace disque :
+
+```
+df -h
+```
+
+Et pour afficher les processus et leur consommation de ressources :
+
+```
+top
+```
+
+Ces commandes constituent une première base de diagnostic. Elles permettent notamment d'identifier une consommation excessive de mémoire, un disque presque plein ou une charge système inhabituelle.
+
+
+Oui, on peut continuer avec la partie 6 de Borealis Linux Lab : automatisation de l'administration Linux avec Bash.
+
+Pas besoin de captures d'écran pour toutes les étapes. Pour ton GitHub, je te conseille simplement une capture du résultat final du script. Ce sera une preuve concrète de son fonctionnement auprès des recruteurs.
+
+## 6. Automatisation de l'administration Linux avec Bash
+
+### 6.1 — Création d'un script de supervision
+
+Après avoir travaillé sur la sécurisation et la surveillance de mon serveur Debian, j'ai souhaité automatiser certaines vérifications.
+
+L'objectif est de créer un script Bash capable de récupérer rapidement des informations sur l'état du serveur : utilisation du processeur, mémoire disponible, espace disque et fonctionnement du service SSH.
+
+J'ai commencé par créer un répertoire pour regrouper mes scripts :
+
+```
+mkdir -p ~/scripts
+cd ~/scripts
+```
+
+J'ai ensuite créé mon premier script :
+
+```
+nano monitoring.sh
+```
+
+### 6.2 — Développement du script Bash
+
+J'ai utilisé plusieurs commandes Linux pour récupérer les informations essentielles sur le serveur et les afficher dans un rapport lisible.
+
+Voici le contenu du script :
+
+```
+#!/bin/bash
+
+echo "=================================="
+echo "     BOREALIS LINUX LAB"
+echo "     Rapport de supervision"
+echo "=================================="
+
+echo ""
+echo "Date : $(date)"
+echo "Serveur : $(hostname)"
+
+echo ""
+echo "=== CHARGE SYSTEME ==="
+uptime
+
+echo ""
+echo "=== MEMOIRE RAM ==="
+free -h
+
+echo ""
+echo "=== ESPACE DISQUE ==="
+df -h /
+
+echo ""
+echo "=== SERVICE SSH ==="
+
+if systemctl is-active --quiet ssh; then
+    echo "SSH : ACTIF"
+else
+    echo "SSH : INACTIF"
+fi
+
+echo ""
+echo "=== FIN DU RAPPORT ==="
+```
+
+Ce script rassemble plusieurs contrôles dans une seule commande, ce qui évite de devoir les exécuter manuellement les uns après les autres.
+
+La commande `uptime` indique la charge moyenne du système, mais ne mesure pas directement le pourcentage d'utilisation du processeur.
+
+### 6.3 — Attribution des permissions
+
+Une fois le script enregistré, je lui ai donné les droits d'exécution :
+
+```
+chmod +x monitoring.sh
+```
+
+J'ai ensuite lancé le script :
+
+```
+./monitoring.sh
+```
+
+Le terminal doit afficher un rapport contenant les informations système et l'état du service SSH.
+
+Exemple de résultat attendu
+
+Illustration
+
+```
+==================================
+     BOREALIS LINUX LAB
+     Rapport de supervision
+==================================
+
+Date : Fri Oct 23 19:30:00 CEST 2026
+Serveur : borealis-debian
+
+=== CHARGE SYSTEME ===
+up 2 days, load average: 0.02, 0.04, 0.01
+
+=== MEMOIRE RAM ===
+total   used   free   available
+3.8Gi   1.1Gi  2.1Gi  2.5Gi
+
+=== ESPACE DISQUE ===
+Filesystem   Size  Used  Avail  Use%
+/dev/sda1     30G  8.0G    20G   29%
+
+=== SERVICE SSH ===
+SSH : ACTIF
+
+=== FIN DU RAPPORT ===
+```
+
+Les valeurs ci-dessus sont fictives. Ton serveur affichera ses propres informations.
+
+### 6.4 — Enregistrement automatique du rapport
+
+Pour conserver une trace des contrôles, j'ai ensuite prévu d'enregistrer les résultats dans un fichier journal.
+
+J'ai créé un répertoire dédié :
+
+```
+mkdir -p ~/scripts/logs
+```
+
+Puis j'ai testé l'enregistrement du rapport :
+
+```
+~/scripts/monitoring.sh >> ~/scripts/logs/monitoring.log 2>&1
+```
+
+Pour consulter les résultats enregistrés :
+
+```
+cat ~/scripts/logs/monitoring.log
+```
+
+L'utilisation de `>>` permet d'ajouter chaque nouveau rapport à la suite du fichier, sans écraser les précédents.
+
+### 6.5 — Planification automatique avec cron
+
+Pour éviter d'exécuter le script manuellement, j'ai prévu de programmer son lancement avec `cron`.
+
+J'ouvre la configuration des tâches planifiées :
+
+```
+crontab -e
+```
+
+J'ajoute la ligne suivante :
+
+```
+0 */6 * * * /bin/bash /home/UTILISATEUR/scripts/monitoring.sh >> /home/UTILISATEUR/scripts/logs/monitoring.log 2>&1
+```
+
+Je remplace `UTILISATEUR` par le nom de mon compte Debian.
+
+Cette configuration permet d'exécuter le script automatiquement toutes les six heures.
